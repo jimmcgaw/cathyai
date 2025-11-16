@@ -5,13 +5,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY . .
 
 RUN uv sync
 
-EXPOSE 8000
+# EXPOSE 8000
 
-# uv run gunicorn -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker main:app
-CMD ["uv", "run","uvicorn", "main:app", "--reload"]
+# CMD ["uv", "run","uvicorn", "main:app", "--reload"]
+
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

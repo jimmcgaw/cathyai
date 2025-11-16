@@ -1,0 +1,67 @@
+_format_version: "3.0"
+_transform: true
+
+############################################################
+# JWT Consumers & RS256 Key
+############################################################
+
+consumers:
+  - username: app-consumer
+    custom_id: "internal-app-user"
+
+jwt_secrets:
+  - consumer: app-consumer
+    key: "app-jwt-key"        # must match iss
+    algorithm: "RS256"
+    rsa_public_key: "${JWT_PUBLIC_KEY}"
+
+############################################################
+# Services & Routes
+############################################################
+
+services:
+  - name: fastapi-service
+    url: http://fastapi-app:8000
+    routes:
+      # JWT-protected API
+      - name: api-routes
+        paths:
+          - /api
+        strip_path: true
+
+      # Public login routes (no JWT)
+      - name: auth-routes
+        paths:
+          - /login
+          - /auth
+        strip_path: false
+
+############################################################
+# Plugins
+############################################################
+
+plugins:
+  # JWT verification
+  - name: jwt
+    service: fastapi-service
+    enabled: true
+    config:
+      key_claim_name: iss
+      claims_to_verify: ["exp"]
+      header_names: ["authorization"]
+      cookie_names: []
+      uri_param_names: ["jwt"]
+
+  # Distributed rate limiting with Redis
+  - name: rate-limiting
+    service: fastapi-service
+    enabled: true
+    config:
+      minute: ${RATE_LIMIT_PER_MINUTE}
+      limit_by: credential
+      policy: redis
+      redis_host: kong-redis
+      redis_port: 6379
+      redis_password: "${REDIS_PASSWORD}"
+      fault_tolerant: true
+      hide_client_headers: false
