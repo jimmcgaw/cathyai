@@ -11,18 +11,9 @@ consumers:
 
 jwt_secrets:
   - consumer: app-consumer
-    key: "app-jwt-key"
+    key: "app-jwt-key"        # must match iss
     algorithm: "RS256"
-    rsa_public_key: |
-      -----BEGIN PUBLIC KEY-----
-      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl3OlcLR0xBafNPZFfxen
-      HJ43UuVwKaDLzuKJbvgMagSIBLATgVlBSbGz5riVDPf2fBzzCU4yX/afUDB8funr
-      rbhstQlDncJzxQolsYB8mHZi55YDPrzb5vz6iFQBczKQXtSD2KX55J7GInCkVzuu
-      GQBn4PuK1FyZfTHOr4KFqeKR+SYe7INJGJ0BJr3JFlS5MpgM9npRGiLSQdgPXYZb
-      OStitDm6aYsT/G+Ce8oqvjG5MxWY4DTNP3shwDQSQmOpcaetxygYtNu5LySy6uqB
-      n2li+Rv+BcDnYBGyOWHKS0B0JgCY4D6EMlWgRsUR2vkjzDdIEeRVgyHNQWHl73Tt
-      EQIDAQAB
-      -----END PUBLIC KEY-----
+    rsa_public_key: "${JWT_PUBLIC_KEY}"
 
 ############################################################
 # Services & Routes
@@ -41,7 +32,6 @@ services:
       # Public login routes (no JWT)
       - name: auth-routes
         paths:
-          - /
           - /login
           - /auth
         strip_path: false
@@ -67,11 +57,11 @@ plugins:
     service: fastapi-service
     enabled: true
     config:
-      minute: 60
+      minute: ${RATE_LIMIT_PER_MINUTE}
       limit_by: credential
       policy: redis
       redis_host: kong-redis
       redis_port: 6379
-      redis_password: "uqNj4dm24RvNs4k!NTKpv@oEAYq9_H60"
+      redis_password: "${REDIS_PASSWORD}"
       fault_tolerant: true
       hide_client_headers: false

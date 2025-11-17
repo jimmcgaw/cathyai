@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+
+from fastapi.staticfiles import StaticFiles
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from datetime import datetime, timedelta
@@ -21,6 +23,13 @@ APP_JWT_EXP_HOURS = int(config("APP_JWT_EXP_HOURS", default=1))
 private_key_pem = Path(APP_JWT_PRIVATE_KEY_PATH).read_text(encoding="utf-8")
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/root")
+async def index():
+    return FileResponse("static/index.html", media_type="text/html", status_code=200, headers={"Cache-Control": "no-cache"}, content_disposition_type="inline")
 
 oauth = OAuth(config)
 oauth.register(
@@ -45,7 +54,7 @@ async def auth_google_callback(request: Request):
     if not userinfo:
         raise HTTPException(status_code=400, detail="Failed to retrieve user info")
 
-    now = datetime.utcnow()
+    now = datetime.now(datetime.timezone.utc)
     payload = {
         "iss": APP_JWT_ISSUER,  # must match Kong jwt_secret.key
         "sub": userinfo["email"],
